@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>S-Learn Absensi | Presensi QR Code Mahasiswa</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts: Poppins & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- HTML5 QR Code -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            overflow-x: hidden;
+        }
+
+        /* ========== S-LEARN LIKE LAYOUT ========== */
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #0f2b3d 0%, #0a1e2c 100%);
+            color: white;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 28px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header h2 i {
+            color: #3b82f6;
+        }
+
+        .sidebar-header p {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 6px;
+        }
+
+        .nav-menu {
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 20px;
+            border-radius: 16px;
+            color: #e2e8f0;
+            transition: 0.2s;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .nav-item i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .nav-item.active {
+            background: rgba(59,130,246,0.2);
+            color: white;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .nav-item:hover:not(.active) {
+            background: rgba(255,255,255,0.08);
+            color: white;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            background: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .page-title h3 {
+            font-weight: 600;
+            color: #0f2b3d;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            padding: 8px 18px;
+            border-radius: 40px;
+        }
+
+        .user-badge i {
+            font-size: 1.2rem;
+            color: #2563eb;
+        }
+
+        /* CONTENT PAGES */
+        .content-pane {
+            padding: 28px 32px;
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .content-pane.active-pane {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* CARDS */
+        .card-slearn {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid #eef2f6;
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        .card-header-s {
+            padding: 20px 28px;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header-s i {
+            font-size: 1.6rem;
+            color: #2563eb;
+        }
+
+        .card-header-s h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .card-body-s {
+            padding: 24px 28px;
+        }
+
+        /* QR Section */
+        .qr-display {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .qr-box {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        #staticQRCode canvas, #staticQRCode img {
+            background: white;
+            padding: 12px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .scanner-area {
+            margin-top: 24px;
+        }
+
+        #qr-reader {
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .select-student-area {
+            margin-top: 24px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 60px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+            background: white;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: scale(0.98);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .status-chip {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .success-chip {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .warning-chip {
+            background: #ffe4e2;
+            color: #b91c1c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        th {
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .alert-banner {
+            background: #eff6ff;
+            border-radius: 20px;
+            padding: 14px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 80px; }
+            .sidebar-header h2 span, .sidebar-header p, .nav-item span { display: none; }
+            .nav-item { justify-content: center; padding: 12px; }
+            .nav-item i { margin: 0; }
+            .content-pane { padding: 20px; }
+            .top-bar { padding: 12px 20px; }
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            font-size: 0.75rem;
+            color: #5b6e8c;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <!-- SIDEBAR ala S-Learn -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-graduation-cap"></i><span> S-Learn</span></h2>
+            <p>Learning Management System</p>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active" data-page="dashboard">
+                <i class="fas fa-tachometer-alt"></i><span> Dashboard</span>
+            </div>
+            <div class="nav-item" data-page="absen">
+                <i class="fas fa-qrcode"></i><span> Presensi QR</span>
+            </div>
+            <div class="nav-item" data-page="riwayat">
+                <i class="fas fa-history"></i><span> Riwayat</span>
+            </div>
+            <div class="nav-item" data-page="bantuan">
+                <i class="fas fa-question-circle"></i><span> Panduan</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-title"><h3><i class="fas fa-user-check"></i> Sistem Absensi QR Code</h3></div>
+            <div class="user-info">
+                <div class="user-badge"><i class="fas fa-user-circle"></i> <span>Mahasiswa Aktif</span></div>
+                <button id="resetDataBtn" class="btn-outline" style="padding:6px 14px;"><i class="fas fa-sync-alt"></i> Reset Demo</button>
+                <button id="exportBtn" class="btn-outline" style="padding:6px 14px;"><i class="fas fa-download"></i> CSV</button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD PANE -->
+        <div id="dashboardPane" class="content-pane active-pane">
+            <div class="card-slearn">
+                <div class="card-header-s">
+                    <i class="fas fa-chalkboard-user"></i>
+                    <h2>Selamat Datang di Portal Presensi</h2>
+                </div>
+                <div class="card-body-s">
+                    <p style="margin-bottom: 16px;">Gunakan fitur <strong>Presensi QR</strong> untuk melakukan absensi kuliah. Cukup scan satu QR Code yang tersedia di ruang kelas, lalu pilih nama Anda.</p>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <div style="background:#eef2ff; padding: 20px; border-radius: 24px; flex:1;">
+                            <i class="fas fa-users" style="font-size: 2rem; color:#2563eb;"></i>
+                            <h3 id="totalMahasiswaCount">0</h3>
+                            <p>Total Mahasiswa Terdaftar</p>
+                        </div>
+                        <div style="background:#eef2ff; padding: 20px; border-radius: 24px; flex:1;">
+                            <i class="fas fa-calendar-check" style="font-size: 2rem; color:#10b981;"></i>
+                            <h3 id="hadirHariIniCount">0</h3>
+                            <p>Hadir Hari Ini</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-clock"></i><h2>Instruksi Cepat</h2></div>
+                <div class="card-body-s">
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li><i class="fas fa-qrcode text-blue"></i> 1. Buka menu <strong>Presensi QR</strong> dan izinkan kamera.</li>
+                        <li><i class="fas fa-camera"></i> 2. Scan QR Code yang ditempel di kelas.</li>
+                        <li><i class="fas fa-user-check"></i> 3. Pilih nama mahasiswa dan klik Konfirmasi Presensi.</li>
+                        <li><i class="fas fa-database"></i> 4. Data tersimpan otomatis di browser kamu.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRESENSI QR PANE -->
+        <div id="absenPane" class="content-pane">
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-qrcode"></i><h2>QR Code Resmi Kelas</h2></div>
+                <div class="card-body-s">
+                    <div class="qr-display">
+                        <div class="qr-box" id="staticQRCode"></div>
+                        <p style="margin-top: 8px;"><i class="fas fa-print"></i> Tempelkan QR ini di depan kelas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-camera"></i><h2>Scan QR Code</h2></div>
+                <div class="card-body-s">
+                    <div class="scanner-area">
+                        <div id="qr-reader"></div>
+                        <div id="scanFeedback" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-id-card"></i><h2>Identifikasi Mahasiswa</h2></div>
+                <div class="card-body-s">
+                    <div class="select-student-area">
+                        <select id="studentSelect" class="form-select">
+                            <option value="">-- Pilih Nama Mahasiswa --</option>
+                        </select>
+                        <div id="studentPreview" style="margin: 16px 0;"></div>
+                        <button id="confirmAttendanceBtn" class="btn-primary" disabled><i class="fas fa-fingerprint"></i> Konfirmasi Presensi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIWAYAT PANE -->
+        <div id="riwayatPane" class="content-pane">
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-list"></i><h2>Daftar Hadir Hari Ini</h2></div>
+                <div class="card-body-s">
+                    <div style="overflow-x: auto;">
+                        <table id="todayTable">
+                            <thead><tr><th>NIM</th><th>Nama</th><th>Jam</th></tr></thead>
+                            <tbody><tr><td colspan="3">Memuat...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-archive"></i><h2>Riwayat Lengkap</h2></div>
+                <div class="card-body-s">
+                    <div style="overflow-x: auto;">
+                        <table id="historyTableFull">
+                            <thead><tr><th>NIM</th><th>Nama</th><th>Tanggal</th><th>Jam</th></tr></thead>
+                            <tbody><tr><td colspan="4">Tidak ada data</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BANTUAN PANE -->
+        <div id="bantuanPane" class="content-pane">
+            <div class="card-slearn">
+                <div class="card-header-s"><i class="fas fa-life-ring"></i><h2>Panduan Penggunaan</h2></div>
+                <div class="card-body-s">
+                    <p><strong>✅ Mengapa hanya satu QR Code?</strong> Sistem menggunakan satu QR statis untuk seluruh mahasiswa. Setelah scan, mahasiswa memilih namanya sendiri untuk mencegah kecurangan.</p>
+                    <p><strong>📱 Apakah data tersimpan?</strong> Ya, data disimpan di localStorage setiap perangkat (cocok untuk satu kelas atau laboratorium).</p>
+                    <p><strong>🖨️ Cetak QR:</strong> Klik kanan pada gambar QR lalu save/print.</p>
+                    <div class="alert-banner"><i class="fas fa-info-circle"></i> Untuk kebutuhan produksi, database dapat diintegrasikan ke server.</div>
+                </div>
+            </div>
+        </div>
+        <footer>© S-Learn Absensi • Teknologi QR Code untuk perkuliahan modern</footer>
+    </div>
+</div>
+
+<script>
+    // ---------- DATA MAHASISWA ----------
+    const students = [
+        { nim: "220101001", name: "Ahmad Fathir Zain" },
+        { nim: "220101002", name: "Budi Santoso" },
+        { nim: "220101003", name: "Citra Dewi Lestari" },
+        { nim: "220101004", name: "Daniel Wijaya" },
+        { nim: "220101005", name: "Eka Prasetya" },
+        { nim: "220101006", name: "Fania Azzahra" },
+        { nim: "220101007", name: "Gilang Ramadhan" },
+        { nim: "220101008", name: "Hana Safitri" }
+    ];
+
+    let attendanceLog = [];   // { nim, name, timestamp, date, time }
+
+    function loadData() {
+        const stored = localStorage.getItem("slearn_absensi_qr");
+        if(stored) {
+            attendanceLog = JSON.parse(stored);
+        } else {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            attendanceLog = [
+                { nim: "220101001", name: "Ahmad Fathir Zain", timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 35).toISOString(), date: today, time: "08:35:12" },
+                { nim: "220101003", name: "Citra Dewi Lestari", timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 5).toISOString(), date: today, time: "09:05:44" },
+            ];
+            const yesterday = new Date(now); yesterday.setDate(now.getDate()-1);
+            const yStr = yesterday.toISOString().split('T')[0];
+            attendanceLog.push({ nim: "220101002", name: "Budi Santoso", timestamp: new Date(yesterday.setHours(10,20)).toISOString(), date: yStr, time: "10:20:30" });
+            attendanceLog.push({ nim: "220101005", name: "Eka Prasetya", timestamp: new Date(yesterday.setHours(13,45)).toISOString(), date: yStr, time: "13:45:18" });
+            saveLog();
+        }
+        refreshAllUI();
+    }
+
+    function saveLog() {
+        localStorage.setItem("slearn_absensi_qr", JSON.stringify(attendanceLog));
+    }
+
+    function todayAttendance() {
+        const today = new Date().toISOString().split('T')[0];
+        return attendanceLog.filter(l => l.date === today);
+    }
+
+    function isPresentToday(nim) {
+        const today = new Date().toISOString().split('T')[0];
+        return attendanceLog.some(l => l.nim === nim && l.date === today);
+    }
+
+    function addAttendance(nim, studentName) {
+        if(isPresentToday(nim)) {
+            showTemporaryMessage("⚠️ Sudah melakukan presensi hari ini!", "warning");
+            return false;
+        }
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        attendanceLog.push({
+            nim: nim,
+            name: studentName,
+            timestamp: now.toISOString(),
+            date: dateStr,
+            time: timeStr
+        });
+        saveLog();
+        refreshAllUI();
+        showTemporaryMessage(`✅ ${studentName} berhasil presensi pukul ${timeStr}`, "success");
+        return true;
+    }
+
+    function refreshAllUI() {
+        // update dropdown
+        const select = document.getElementById("studentSelect");
+        if(select) {
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Pilih Mahasiswa --</option>';
+            students.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.nim;
+                opt.textContent = `${s.name} (${s.nim})`;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+            triggerStudentPreview();
+        }
+
+        // dashboard counts
+        document.getElementById("totalMahasiswaCount").innerText = students.length;
+        document.getElementById("hadirHariIniCount").innerText = todayAttendance().length;
+
+        // Tabel hari ini
+        const todayBody = document.querySelector("#todayTable tbody");
+        const todayRecs = todayAttendance();
+        if(todayRecs.length===0) todayBody.innerHTML = '<tr><td colspan="3">Belum ada presensi hari ini</td></tr>';
+        else {
+            todayBody.innerHTML = "";
+            todayRecs.forEach(rec => {
+                todayBody.innerHTML += `<tr><td>${rec.nim}</td><td>${rec.name}</td><td>${rec.time}</td></tr>`;
+            });
+        }
+
+        // Riwayat lengkap
+        const historyBody = document.querySelector("#historyTableFull tbody");
+        const sorted = [...attendanceLog].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+        if(sorted.length===0) historyBody.innerHTML = '<tr><td colspan="4">Belum ada riwayat</td></tr>';
+        else {
+            historyBody.innerHTML = "";
+            sorted.forEach(rec => {
+                historyBody.innerHTML += `<tr><td>${rec.nim}</td><td>${rec.name}</td><td>${rec.date}</td><td>${rec.time}</td></tr>`;
+            });
+        }
+        updateConfirmButton();
+    }
+
+    function triggerStudentPreview() {
+        const select = document.getElementById("studentSelect");
+        const nim = select.value;
+        const previewDiv = document.getElementById("studentPreview");
+        if(!nim) {
+            previewDiv.innerHTML = '<div class="alert-banner">🔍 Pilih nama mahasiswa untuk presensi</div>';
+            return;
+        }
+        const student = students.find(s => s.nim === nim);
+        if(student) {
+            const sudah = isPresentToday(student.nim);
+            previewDiv.innerHTML = `
+                <div style="background:#f8fafc; border-radius: 20px; padding: 16px;">
+                    <div><strong><i class="fas fa-user-graduate"></i> ${student.name}</strong></div>
+                    <div>NIM: ${student.nim}</div>
+                    ${sudah ? '<span class="status-chip success-chip"><i class="fas fa-check-circle"></i> Sudah Absen Hari Ini</span>' : '<span class="status-chip warning-chip">Belum Absen</span>'}
+                </div>
+            `;
+        } else previewDiv.innerHTML = "";
+        updateConfirmButton();
+    }
+
+    function updateConfirmButton() {
+        const select = document.getElementById("studentSelect");
+        const nim = select?.value;
+        const btn = document.getElementById("confirmAttendanceBtn");
+        if(btn) {
+            if(nim && !isPresentToday(nim)) btn.disabled = false;
+            else btn.disabled = true;
+        }
+    }
+
+    function showTemporaryMessage(msg, type) {
+        const feedback = document.getElementById("scanFeedback");
+        if(feedback) {
+            feedback.innerHTML = `<div class="alert-banner" style="background:${type==='success'?'#dcfce7':'#fff3cd'}">${msg}</div>`;
+            setTimeout(() => { if(feedback) feedback.innerHTML = ""; }, 3000);
+        } else alert(msg);
+    }
+
+    // reset demo
+    function resetDemo() {
+        if(confirm("Reset semua data presensi ke contoh awal?")) {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const newLog = [
+                { nim: "220101001", name: "Ahmad Fathir Zain", timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 35).toISOString(), date: today, time: "08:35:12" },
+                { nim: "220101003", name: "Citra Dewi Lestari", timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 5).toISOString(), date: today, time: "09:05:44" },
+            ];
+            const yesterday = new Date(now); yesterday.setDate(now.getDate()-1);
+            const yStr = yesterday.toISOString().split('T')[0];
+            newLog.push({ nim: "220101002", name: "Budi Santoso", timestamp: new Date(yesterday.setHours(10,20)).toISOString(), date: yStr, time: "10:20:30" });
+            newLog.push({ nim: "220101005", name: "Eka Prasetya", timestamp: new Date(yesterday.setHours(13,45)).toISOString(), date: yStr, time: "13:45:18" });
+            attendanceLog = newLog;
+            saveLog();
+            refreshAllUI();
+            document.getElementById("studentSelect").value = "";
+            triggerStudentPreview();
+            showTemporaryMessage("Data direset ke demo awal", "success");
+        }
+    }
+
+    function exportCSV() {
+        if(attendanceLog.length === 0) return alert("Tidak ada data.");
+        let csv = [["NIM","Nama","Tanggal","Jam"]];
+        attendanceLog.forEach(l => csv.push([l.nim, l.name, l.date, l.time]));
+        const blob = new Blob([csv.map(row=>row.join(",")).join("\n")], {type:"text/csv"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `absensi_slearn_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    // QR static
+    function generateQR() {
+        const container = document.getElementById("staticQRCode");
+        container.innerHTML = "";
+        new QRCode(container, {
+            text: "SLEARN_ABSENSI_UNIVERSITAS",
+            width: 170,
+            height: 170,
+            colorDark: "#0f2b3d",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        window.expectedQR = "SLEARN_ABSENSI_UNIVERSITAS";
+    }
+
+    let scanner;
+    function startScanner() {
+        if(scanner) scanner.stop().catch(()=>{});
+        const readerDiv = document.getElementById("qr-reader");
+        if(!readerDiv) return;
+        scanner = new Html5Qrcode("qr-reader");
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decoded) => {
+            if(decoded === window.expectedQR) {
+                document.getElementById("scanFeedback").innerHTML = `<div class="alert-banner" style="background:#dcfce7;">✅ QR Valid! Silakan pilih nama Anda di bawah.</div>`;
+                // scroll to student select
+                document.querySelector(".select-student-area").scrollIntoView({behavior:"smooth"});
+                setTimeout(()=>{
+                    const fb = document.getElementById("scanFeedback");
+                    if(fb.innerHTML.includes("QR Valid")) fb.innerHTML = "";
+                }, 3000);
+            } else {
+                document.getElementById("scanFeedback").innerHTML = `<div class="alert-banner" style="background:#fee2e2;">❌ QR tidak dikenali. Gunakan QR resmi kelas.</div>`;
+                setTimeout(()=>{
+                    const fb = document.getElementById("scanFeedback");
+                    if(fb && fb.innerHTML.includes("tidak dikenali")) fb.innerHTML = "";
+                }, 2500);
+            }
+        }, (err) => {});
+    }
+
+    // navigasi sidebar
+    document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", (e) => {
+            document.querySelectorAll(".nav-item").forEach(nav => nav.classList.remove("active"));
+            item.classList.add("active");
+            const page = item.getAttribute("data-page");
+            document.querySelectorAll(".content-pane").forEach(pane => pane.classList.remove("active-pane"));
+            if(page === "dashboard") document.getElementById("dashboardPane").classList.add("active-pane");
+            if(page === "absen") document.getElementById("absenPane").classList.add("active-pane");
+            if(page === "riwayat") document.getElementById("riwayatPane").classList.add("active-pane");
+            if(page === "bantuan") document.getElementById("bantuanPane").classList.add("active-pane");
+        });
+    });
+
+    document.getElementById("studentSelect")?.addEventListener("change", () => { triggerStudentPreview(); updateConfirmButton(); });
+    document.getElementById("confirmAttendanceBtn")?.addEventListener("click", () => {
+        const nim = document.getElementById("studentSelect").value;
+        if(nim) {
+            const student = students.find(s => s.nim === nim);
+            if(student && !isPresentToday(nim)) {
+                addAttendance(nim, student.name);
+                document.getElementById("studentSelect").value = "";
+                triggerStudentPreview();
+            } else if(isPresentToday(nim)) showTemporaryMessage("Sudah absen hari ini", "warning");
+        }
+    });
+    document.getElementById("resetDataBtn")?.addEventListener("click", resetDemo);
+    document.getElementById("exportBtn")?.addEventListener("click", exportCSV);
+
+    window.addEventListener("load", () => {
+        loadData();
+        generateQR();
+        setTimeout(() => startScanner(), 500);
+    });
+</script>
+</body>
+</html>
